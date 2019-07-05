@@ -1,0 +1,54 @@
+#!/bin/bash -eu
+
+command=${1-connect}
+VPN_NAME="Ulti VPN"
+BW_ITEM="dbe06a63-bfba-4e12-b0d3-aa0c0163b72d"
+
+export_bw_session(){
+	if [ -z "${BW_SESSION-}" ]; then
+		export BW_SESSION=$(bw unlock --raw)
+	fi
+	if ! bw sync; then
+	       unset BW_SESSION
+	       export_bw_session
+	fi
+}
+
+totp(){
+	bw get totp "$BW_ITEM"
+}
+
+group_password(){
+	bw get password "$BW_ITEM"
+}
+
+up(){
+	nmcli connection up "$VPN_NAME" passwd-file <(cat)
+}
+
+passwd_file(){
+	echo "vpn.secrets.Xauth password:$(totp)"
+	echo "vpn.secrets.IPSec secret:$(group_password)"
+}
+
+connect(){	
+	export_bw_session
+	passwd_file | up 
+}
+
+disconnect(){
+	nmcli connection down "$VPN_NAME"
+}
+
+case $command in
+	totp)
+		totp
+		;;
+	connect|up)
+		connect
+		;;
+	disconnect|down)
+		disconnect
+		;;
+esac
+
