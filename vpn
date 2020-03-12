@@ -5,14 +5,11 @@ VPN_NAME="Ulti VPN"
 BW_ITEM="dbe06a63-bfba-4e12-b0d3-aa0c0163b72d"
 
 export_bw_session(){
-	if [ -z "${BW_SESSION-}" ]; then
-		export BW_SESSION=$(bw unlock --raw)
-	fi
-	if ! bw sync; then
-	       unset BW_SESSION
-	       export_bw_session
-	fi
+        bw login --check || export BW_SESSION="$(bw login --raw)"
+        bw unlock --check || export BW_SESSION="$(bw unlock --raw)"
+        bw sync
 }
+
 
 totp(){
 	bw get totp "$BW_ITEM"
